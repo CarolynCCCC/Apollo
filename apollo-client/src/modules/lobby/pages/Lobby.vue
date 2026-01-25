@@ -1,0 +1,68 @@
+<script setup lang="ts">
+import { onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import AvalonButton from '@/shared/components/AvalonButton.vue';
+import { useDialog } from '@/shared/composables/useDialog';
+import { useRoomStore } from '@/stores/roomStore';
+import CreateRoomModal from '@/modules/lobby/components/CreateRoomModal.vue';
+import JoinRoomModal from '@/modules/lobby/components/JoinRoomModal.vue';
+import { roomPath } from '@/routes';
+
+const { open } = useDialog();
+const router = useRouter();
+const roomStore = useRoomStore();
+
+function openCreateRoomDialog() {
+  open(CreateRoomModal, {
+    title: 'New Room',
+    width: '600px',
+    showClose: true,
+  });
+}
+
+function openJoinRoomDialog() {
+  open(JoinRoomModal, {
+    title: 'Join Room',
+    width: '480px',
+    showClose: true,
+  });
+}
+
+onMounted(() => {
+  roomStore.clearState();
+})
+
+watch(
+  () => roomStore.joinRoomSuccess,
+  (success) => {
+    if (success && roomStore.currentRoom) {
+      router.push({
+        name: roomPath.room,
+        params: {
+          roomId: roomStore.currentRoom.id
+        }
+      })
+    }
+  },
+);
+</script>
+
+<template>
+  <div class="flex h-full flex-col items-center justify-between space-y-4">
+    <div>
+      <h1 class="text-4xl font-bold mb-4">Welcome to Avalon Lobby</h1>
+      <p class="text-lg">Join an existing room or create a new one to start playing!</p>
+    </div>
+    <div class="flex flex-col space-y-4 pb-8">
+      <avalon-button @button-clicked="openCreateRoomDialog()">
+        Create Room
+      </avalon-button>
+      <avalon-button @button-clicked="openJoinRoomDialog()">
+        Join Room
+      </avalon-button>
+    </div>
+  </div>
+</template>
+<style scoped>
+
+</style>

@@ -1,0 +1,26 @@
+const fs = require('fs');
+const path = require('path');
+
+function copyFolder(src, dest) {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    if (entry.isDirectory()) {
+      copyFolder(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+const source = path.resolve(__dirname, '../../apollo-constants/constant');
+const destination = path.resolve(__dirname, '../src/constant');
+
+copyFolder(source, destination);

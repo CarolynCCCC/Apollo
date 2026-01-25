@@ -1,0 +1,134 @@
+@use "tailwindcss";
+@use './fonts.scss';
+
+@theme {
+  --color-good-50: #e6f0ff;
+  --color-good-100: #b3d1ff;
+  --color-good-200: #80b3ff;
+  --color-good-300: #4d94ff;
+  --color-good-400: #1a75ff;
+  --color-good-500: #0059e6;
+  --color-good-600: #0047b3;
+  --color-good-700: #003580;
+  --color-good-800: #00234d;
+  --color-good-900: #00111a;
+
+  --color-evil-50: #ffe6e6;
+  --color-evil-100: #ffb3b3;
+  --color-evil-200: #ff8080;
+  --color-evil-300: #ff4d4d;
+  --color-evil-400: #ff1a1a;
+  --color-evil-500: #e60000;
+  --color-evil-600: #b30000;
+  --color-evil-700: #800000;
+  --color-evil-800: #4d0000;
+  --color-evil-900: #1a0000;
+
+  --color-gold-50: #fffbeb;
+  --color-gold-100: #fef3c7;
+  --color-gold-200: #fde68a;
+  --color-gold-300: #fcd34d;
+  --color-gold-400: #fbbf24;
+  --color-gold-500: #f59e0b;
+  --color-gold-600: #d97706;
+  --color-gold-700: #b45309;
+  --color-gold-800: #92400e;
+  --color-gold-900: #78350f;
+
+  --color-stone-50: #f8f9fa;
+  --color-stone-100: #e9ecef;
+  --color-stone-200: #dee2e6;
+  --color-stone-300: #ced4da;
+  --color-stone-400: #adb5bd;
+  --color-stone-500: #6c757d;
+  --color-stone-600: #495057;
+  --color-stone-700: #343a40;
+  --color-stone-800: #212529;
+  --color-stone-900: #0d0f12;
+
+  --color-medieval-parchment: #f4e8d0;
+  --color-medieval-leather: #8b4513;
+  --color-medieval-burgundy: #800020;
+  --color-medieval-forest: #0b4f0b;
+  --color-medieval-iron: #434343;
+  --color-medieval-silver: #c0c0c0;
+  --color-medieval-royal: #4169e1;
+  --color-medieval-crimson: #dc143c;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body, html {
+    font-family: 'Cinzel', serif;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #0d0f12 0%, #212529 50%, #343a40 100%);
+    color: #f4e8d0;
+  }
+
+  #app {
+    height: 100dvh;
+    width: 100%;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input,
+  textarea {
+    font-family: 'Poppins', sans-serif,
+  }
+}
+
+@layer components {
+  .btn-good {
+    @apply bg-good-500 hover:bg-good-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+
+  .btn-evil {
+    @apply bg-evil-500 hover:bg-evil-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+
+  .btn-gold {
+    @apply text-2xl bg-gold-500 hover:bg-gold-600 text-stone-700 font-semibold py-3 px-4 rounded-lg transition-colors duration-200 cursor-pointer;
+  }
+
+  .btn-secondary {
+    @apply bg-stone-600 hover:bg-stone-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+
+  .card {
+    @apply bg-stone-800/90 backdrop-blur-sm border border-gold-700/50 rounded-lg shadow-2xl p-6;
+  }
+
+  .card-header {
+    @apply text-gold-400 text-2xl font-bold mb-4 border-b border-gold-700/50 pb-2;
+  }
+
+  .input-field {
+    @apply bg-stone-700 border border-stone-600 text-medieval-parchment rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent;
+  }
+
+  .role-good {
+    @apply bg-good-900/50 border-good-500;
+  }
+
+  .role-evil {
+    @apply bg-evil-900/50 border-evil-500;
+  }
+
+  .quest-success {
+    @apply bg-good-800/30 border-l-4 border-good-500;
+  }
+
+  .quest-fail {
+    @apply bg-evil-800/30 border-l-4 border-evil-500;
+  }
+}
