@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { useGameStore } from '@/stores/gameStore';
-import { usePlayerStore } from '@/stores/playerStore';
-import { useRoomStore } from '@/stores/roomStore';
-import { useDialog } from '@/shared/composables/useDialog';
+import {ref, computed, onMounted, onUnmounted, watch} from 'vue';
+import {useRoute} from 'vue-router';
+import {useGameStore} from '@/stores/gameStore';
+import {usePlayerStore} from '@/stores/playerStore';
+import {useRoomStore} from '@/stores/roomStore';
+import {useDialog} from '@/shared/composables/useDialog';
 import AvalonDialog from '@/shared/components/AvalonDialog.vue';
 import AvalonButton from '@/shared/components/AvalonButton.vue';
 import VoteHistoryDialog from '@/modules/game/components/VoteHistoryDialog.vue';
-import QuestHistoryDialog from '@/modules/game/components/QuestHistoryDialog.vue';
 import GameEndedDialog from '@/modules/game/components/GameEndedDialog.vue';
+import AssassinDialog from "@/modules/game/components/AssassinDialog.vue";
+import QuestResultDialog from "@/modules/game/components/QuestResultDialog.vue";
+import VoteResultDialog from "@/modules/game/components/VoteResultDialog.vue";
 
 const route = useRoute();
-const { open, close } = useDialog();
+const {open, close} = useDialog();
 const gameStore = useGameStore();
 const playerStore = usePlayerStore();
 const roomStore = useRoomStore();
@@ -37,23 +39,30 @@ const allPlayers = computed(() => roomStore.currentRoom?.players || []);
 const isAssassinPhase = computed(() => roomStore.currentRoom?.status === 'assassin_phase');
 
 watch(() => gameStore.voteResult, (result) => {
-  console.log('Watch triggered - voteResult changed:', result);
-  console.log('Current playerId:', playerStore.playerId);
-
   if (result && !result.approved && result.nextLeaderId === playerStore.playerId) {
-    console.log('Showing new leader message for player:', playerStore.playerId);
     newLeaderMessageVisible.value = true;
     setTimeout(() => {
       newLeaderMessageVisible.value = false;
     }, 4000);
   }
-}, { deep: true });
+});
+
+watch(() => gameStore.isAssassinPhase, (newVal) => {
+  if (newVal)
+    openAssassinDialog();
+})
+
+watch(() => gameStore.currentVoteResult, (voteResult) => {
+  if (voteResult) {
+    open(VoteResultDialog, {})
+  }
+});
 
 function handleNextRound(event: Event) {
   const customEvent = event as CustomEvent;
-  const { questNumber, leaderName } = customEvent.detail;
+  const {questNumber, leaderName} = customEvent.detail;
 
-  console.log('Next round started:', { questNumber, leaderName });
+  console.log('Next round started:', {questNumber, leaderName});
 
   // Background animation
   nextRoundHighlight.value = true;
@@ -70,15 +79,25 @@ function handleNextRound(event: Event) {
   }
 }
 
+function openAssassinDialog() {
+  open(AssassinDialog, {
+    props: {
+      targets: gameStore.assassinTargets,
+      message: 'Select a target to assassinate:',
+      onAssassinate: (targetId: number) => handleAssassinate(targetId),
+    }
+  });
+}
+
 onMounted(async () => {
   if (playerStore.playerId && roomId.value) {
     await gameStore.fetchRoleInfo(playerStore.playerId, roomId.value);
   }
-  window.addEventListener('ws:nextRound', handleNextRound as EventListener);
+  globalThis.addEventListener('ws:nextRound', handleNextRound as EventListener);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('ws:nextRound', handleNextRound as EventListener);
+  globalThis.removeEventListener('ws:nextRound', handleNextRound as EventListener);
   close();
 });
 
@@ -119,9 +138,9 @@ async function submitTeamProposal() {
 
   try {
     await gameStore.proposeTeam(
-      playerStore.playerId!,
-      roomId.value,
-      selectedPlayerIds.value,
+        playerStore.playerId!,
+        roomId.value,
+        selectedPlayerIds.value,
     );
 
     selectedPlayerIds.value = [];
@@ -135,23 +154,17 @@ async function submitTeamProposal() {
 async function handleVote(approve: boolean) {
   try {
     await gameStore.voteOnTeam(
-      approve
+        approve
     );
   } catch (error) {
     console.error('Failed to vote:', error);
   }
 }
 
-async function handleAssassinate() {
-  if (!selectedAssassinTarget.value || isAssassinating.value) return;
-
-  isAssassinating.value = true;
-
+async function handleAssassinate(targetId: number) {
   try {
     await gameStore.assassinateTarget(
-      playerStore.playerId!,
-      selectedAssassinTarget.value,
-      roomId.value
+        targetId
     );
     selectedAssassinTarget.value = null;
   } catch (error) {
@@ -161,14 +174,10 @@ async function handleAssassinate() {
   }
 }
 
-function selectAssassinTarget(targetId: number) {
-  selectedAssassinTarget.value = targetId;
-}
-
 async function handleQuestVote(success: boolean) {
   try {
     await gameStore.voteOnQuest(
-      success,
+        success,
     );
   } catch (error) {
     console.error('Failed to vote on quest:', error);
@@ -176,24 +185,17 @@ async function handleQuestVote(success: boolean) {
 }
 
 function openVoteHistory() {
-  open(VoteHistoryDialog, {
-    props: {
-      onClose: close
-    }
-  });
+  open(VoteHistoryDialog, {});
 }
 
-function openQuestHistory() {
-  open(QuestHistoryDialog, {
-    props: {
-      onClose: close
-    }
-  });
-}
+watch(() => gameStore.currentQuestResult, (questResult) => {
+  if (questResult) {
+    open(QuestResultDialog, {});
+  }
+});
 
 watch(() => gameStore.gameEnded, (gameEndedData) => {
   if (gameEndedData) {
-    console.log('Game ended, showing dialog:', gameEndedData);
     open(GameEndedDialog, {
       props: {
         winner: gameEndedData.winner,
@@ -214,7 +216,7 @@ watch(() => gameStore.gameEnded, (gameEndedData) => {
          'bg-gradient-to-b from-red-950 to-stone-900': isAssassinPhase,
          'bg-gradient-to-b from-stone-900 to-stone-800': !nextRoundHighlight && !isAssassinPhase
        }">
-    <AvalonDialog :open="showRoleDialog" @close="closeRoleDialog" :closeable="false">
+    <AvalonDialog :open="showRoleDialog" @close="closeRoleDialog">
       <div class="text-center space-y-6">
         <h2 class="text-3xl font-bold font-cinzel" :class="{
           'text-evil-600': isEvil,
@@ -288,21 +290,20 @@ watch(() => gameStore.gameEnded, (gameEndedData) => {
 
     <div>
       <div class="mx-auto">
-        <div class="mb-8 text-center">
+        <div class="mb-5 text-center">
           <h1 class="text-4xl font-bold text-gold-400 font-cinzel mb-2">Quest {{ gameStore.currentRound }}</h1>
           <p class="text-medieval-parchment">Round {{ gameStore.currentRound }}</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 gap-6">
           <div class="lg:col-span-2 space-y-6">
-            <div class="bg-stone-800/50 backdrop-blur rounded-lg border border-stone-600 p-6">
-              <h2 class="text-2xl font-bold text-gold-400 font-cinzel mb-4 text-center">Quest Progress</h2>
+            <div class="bg-stone-800/50 backdrop-blur rounded-lg border border-stone-600 p-3">
               <div class="flex justify-center items-center gap-4">
                 <div
-                  v-for="mission in gameStore.missions"
-                  :key="mission.questNumber"
-                  class="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-2 transition-all"
-                  :class="{
+                    v-for="mission in gameStore.missions"
+                    :key="mission.questNumber"
+                    class="w-8 rounded-full flex items-center justify-center text-xl font-bold border-2 transition-all"
+                    :class="{
                     'border-gold-500 bg-gold-900/20 text-gold-400 shadow-lg shadow-gold-500/50': mission.questNumber === gameStore.currentRound,
                     'border-stone-600 bg-stone-700/20 text-stone-400': mission.questNumber !== gameStore.currentRound
                   }"
@@ -321,20 +322,19 @@ watch(() => gameStore.gameEnded, (gameEndedData) => {
                   <p class="text-medieval-parchment text-sm mb-2">
                     {{ gameStore.questVoteMessage }}
                   </p>
-                  <p class="text-stone-400 text-xs">Quest {{ gameStore.currentRound }}</p>
                 </div>
 
                 <div v-if="!gameStore.hasVotedOnQuest" class="flex gap-4 justify-center">
                   <avalon-button
-                    @click="handleQuestVote(true)"
-                    class="bg-good-600 hover:bg-good-700 border-good-500"
+                      @click="handleQuestVote(true)"
+                      class="bg-transparent text-good-300 hover:bg-good-700 border-good-500"
                   >
                     ✓ Success
                   </avalon-button>
                   <avalon-button
-                    v-if="gameStore.canFailQuest"
-                    @click="handleQuestVote(false)"
-                    class="bg-evil-600 hover:bg-evil-700 border-evil-500"
+                      v-if="gameStore.canFailQuest"
+                      @click="handleQuestVote(false)"
+                      class="bg-transparent text-evil-300 hover:bg-evil-700 border-evil-500"
                   >
                     ✗ Fail
                   </avalon-button>
@@ -345,15 +345,13 @@ watch(() => gameStore.gameEnded, (gameEndedData) => {
                 </div>
               </div>
             </div>
-
-
             <div class="bg-stone-800/50 backdrop-blur rounded-lg border border-stone-600 p-6">
               <h2 class="text-2xl font-bold text-gold-400 font-cinzel mb-4">
                 {{ 'Team Vote' }}
               </h2>
 
               <!-- Leader selecting team -->
-              <div v-if="isLeader && !gameStore.isVotingPhase" class="space-y-4">
+              <div v-if="isLeader && gameStore.isLeaderPhase" class="space-y-4">
                 <div class="text-center mb-4">
                   <p class="text-medieval-parchment text-sm mb-2">
                     Select {{ requiredTeamSize }} players to go on Quest {{ gameStore.currentRound }}
@@ -365,11 +363,11 @@ watch(() => gameStore.gameEnded, (gameEndedData) => {
 
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <button
-                    v-for="player in allPlayers"
-                    :key="player.id"
-                    @click="togglePlayerSelection(player.id)"
-                    class="p-4 rounded-lg border-2 transition-all font-semibold"
-                    :class="{
+                      v-for="player in allPlayers"
+                      :key="player.id"
+                      @click="togglePlayerSelection(player.id)"
+                      class="p-4 rounded-lg border-2 transition-all font-semibold"
+                      :class="{
                       'border-gold-500 bg-gold-900/30 text-gold-300 shadow-lg shadow-gold-500/30': isPlayerSelected(player.id),
                       'border-stone-600 bg-stone-700/20 text-stone-300 hover:border-stone-500 hover:bg-stone-700/40': !isPlayerSelected(player.id)
                     }"
@@ -383,9 +381,9 @@ watch(() => gameStore.gameEnded, (gameEndedData) => {
 
                 <div class="flex justify-center mt-6">
                   <avalon-button
-                    @click="submitTeamProposal"
-                    :disabled="!canSubmitTeam || isSubmitting"
-                    :class="{ 'opacity-50 cursor-not-allowed': !canSubmitTeam || isSubmitting }"
+                      @click="submitTeamProposal"
+                      :disabled="!canSubmitTeam || isSubmitting"
+                      :class="{ 'opacity-50 cursor-not-allowed': !canSubmitTeam || isSubmitting }"
                   >
                     {{ isSubmitting ? 'Submitting...' : 'Propose Team' }}
                   </avalon-button>
@@ -405,9 +403,9 @@ watch(() => gameStore.gameEnded, (gameEndedData) => {
                   <h3 class="text-lg font-semibold text-gold-300 mb-3 text-center">Proposed Team</h3>
                   <div class="flex flex-wrap justify-center gap-2">
                     <div
-                      v-for="member in gameStore.proposedTeamMembers"
-                      :key="member.id"
-                      class="px-4 py-2 bg-gold-900/30 border border-gold-600 rounded text-gold-300 font-semibold"
+                        v-for="member in gameStore.proposedTeamMembers"
+                        :key="member.id"
+                        class="px-4 py-2 bg-gold-900/30 border border-gold-600 rounded text-gold-300 font-semibold"
                     >
                       {{ member.name || `Player ${member.id}` }}
                     </div>
@@ -423,10 +421,10 @@ watch(() => gameStore.gameEnded, (gameEndedData) => {
                   </div>
                   <div class="flex flex-wrap gap-2">
                     <div
-                      v-for="voter in gameStore.votedPlayers"
-                      :key="voter.id"
-                      class="px-3 py-1 rounded text-sm flex items-center gap-1"
-                      :class="{
+                        v-for="voter in gameStore.votedPlayers"
+                        :key="voter.id"
+                        class="px-3 py-1 rounded text-sm flex items-center gap-1"
+                        :class="{
                         'bg-good-900/30 border border-good-600 text-good-300': voter.approve,
                         'bg-evil-900/30 border border-evil-600 text-evil-300': !voter.approve
                       }"
@@ -439,16 +437,16 @@ watch(() => gameStore.gameEnded, (gameEndedData) => {
 
                 <div v-if="!gameStore.hasVoted" class="flex gap-4 justify-center">
                   <avalon-button
-                    @click="handleVote(true)"
-                    class="bg-good-600 hover:bg-good-700 border-good-500"
+                      @click="handleVote(true)"
+                      class="bg-transparent text-good-300 hover:bg-good-700 border-good-500"
                   >
-                    ✓ Approve
+                    Approve
                   </avalon-button>
                   <avalon-button
-                    @click="handleVote(false)"
-                    class="bg-evil-600 hover:bg-evil-700 border-evil-500"
+                      @click="handleVote(false)"
+                      class="text-evil-300 bg-transparent hover:bg-evil-700 border-evil-500"
                   >
-                    ✗ Reject
+                    Reject
                   </avalon-button>
                 </div>
 
@@ -472,191 +470,39 @@ watch(() => gameStore.gameEnded, (gameEndedData) => {
               </div>
 
               <!-- Waiting for leader -->
-              <div v-else class="text-center text-stone-400">
+              <div v-if="gameStore.isLeaderPhase && !isLeader" class="text-center text-stone-400">
                 <p class="mb-2">Waiting for the leader to select the team...</p>
-                <p class="text-sm text-gold-400">Leader: {{ allPlayers.find(p => p.id === gameStore.leaderId)?.name
+                <p class="text-sm text-gold-400">Leader: {{
+                    allPlayers.find(p => p.id === gameStore.leaderId)?.name
                   }}</p>
               </div>
             </div>
-
-            <div v-if="gameStore.voteResult" class="bg-stone-800/50 backdrop-blur rounded-lg border p-6"
-                 :class="{
-                   'border-good-600': gameStore.voteResult.approved,
-                   'border-evil-600': !gameStore.voteResult.approved
-                 }">
-              <h2 class="text-2xl font-bold font-cinzel mb-4 text-center"
-                  :class="{
-                    'text-good-400': gameStore.voteResult.approved,
-                    'text-evil-400': !gameStore.voteResult.approved
-                  }">
-                Vote Result: {{ gameStore.voteResult.approved ? 'APPROVED' : 'REJECTED' }}
-              </h2>
-
-              <div class="space-y-4">
-                <div class="flex justify-center gap-8 mb-4">
-                  <div class="text-center">
-                    <div class="text-3xl font-bold text-good-400">{{ gameStore.voteResult.approveCount }}</div>
-                    <div class="text-sm text-stone-400">Approve</div>
-                  </div>
-                  <div class="text-center">
-                    <div class="text-3xl font-bold text-evil-400">{{ gameStore.voteResult.rejectCount }}</div>
-                    <div class="text-sm text-stone-400">Reject</div>
-                  </div>
-                </div>
-
-                <div class="bg-stone-700/30 rounded-lg p-6">
-                  <h3 class="text-lg font-semibold text-medieval-parchment mb-4 text-center">Vote Details</h3>
-                  <div class="flex flex-wrap justify-center gap-4">
-                    <div
-                      v-for="vote in gameStore.voteResult.votes"
-                      :key="vote.playerId"
-                      class="flex flex-col items-center gap-2"
-                    >
-                      <div
-                        class="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold border-4 transition-all"
-                        :class="{
-                          'bg-good-900/30 border-good-500 text-good-300': vote.approve,
-                          'bg-evil-900/30 border-evil-500 text-evil-300': !vote.approve
-                        }"
-                      >
-                        {{ vote.approve ? '✓' : '✗' }}
-                      </div>
-                      <div class="text-xs text-center text-stone-300 max-w-[80px] truncate">
-                        {{ vote.playerName || `Player ${vote.playerId}` }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="gameStore.voteResult.approved" class="text-center mt-4">
-                  <p class="text-good-400 font-semibold text-lg">
-                    Team approved! Waiting for quest votes...
-                  </p>
-                </div>
-
-                <div v-else class="text-center mt-4">
-                  <p class="text-evil-400 font-semibold text-lg mb-2">
-                    Team rejected. Moving to next proposal.
-                  </p>
-                  <p class="text-stone-400 text-sm">
-                    New Leader: {{ allPlayers.find(p => p.id === gameStore.voteResult?.nextLeaderId)?.name }}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div v-if="gameStore.currentQuestResult" class="bg-stone-800/50 backdrop-blur rounded-lg border p-6"
-                 :class="{
-                   'border-good-600': gameStore.currentQuestResult.result === 'success',
-                   'border-evil-600': gameStore.currentQuestResult.result === 'fail'
-                 }">
-              <h2 class="text-2xl font-bold font-cinzel mb-4 text-center"
-                  :class="{
-                    'text-good-400': gameStore.currentQuestResult.result === 'success',
-                    'text-evil-400': gameStore.currentQuestResult.result === 'fail'
-                  }">
-                Quest {{ gameStore.currentQuestResult.questNumber }} Result:
-                {{ gameStore.currentQuestResult.result === 'success' ? 'SUCCESS' : 'FAILED' }}
-              </h2>
-
-              <div class="space-y-4">
-                <div class="flex justify-center gap-8 mb-4">
-                  <div class="text-center">
-                    <div class="text-3xl font-bold text-good-400">{{ gameStore.currentQuestResult.successCount }}</div>
-                    <div class="text-sm text-stone-400">Success</div>
-                  </div>
-                  <div class="text-center">
-                    <div class="text-3xl font-bold text-evil-400">{{ gameStore.currentQuestResult.failCount }}</div>
-                    <div class="text-sm text-stone-400">Fail</div>
-                  </div>
-                </div>
-
-                <div class="bg-stone-700/30 rounded-lg p-6">
-                  <h3 class="text-lg font-semibold text-medieval-parchment mb-4 text-center">Vote Cards</h3>
-                  <div class="flex justify-center gap-2">
-                    <div
-                      v-for="(vote, index) in gameStore.currentQuestResult.votes"
-                      :key="index"
-                      class="w-16 h-20 rounded-lg flex items-center justify-center text-2xl font-bold border-4 shadow-lg"
-                      :class="{
-                        'bg-good-900/30 border-good-500 text-good-300': vote.vote === 'success',
-                        'bg-evil-900/30 border-evil-500 text-evil-300': vote.vote === 'fail'
-                      }"
-                    >
-                      {{ vote.vote === 'success' ? '✓' : '✗' }}
-                    </div>
-                  </div>
-                  <p class="text-xs text-stone-400 text-center mt-3">
-                    (Votes are shuffled and anonymous)
-                  </p>
-                </div>
-
-                <div class="bg-stone-700/30 rounded-lg p-4">
-                  <p class="text-sm text-stone-400 text-center">
-                    Required Fails: {{ gameStore.currentQuestResult.requiredFails }}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div v-if="gameStore.isQuestVotingPhase" class="bg-stone-800/50 backdrop-blur rounded-lg border border-gold-600 p-6">
-              <h2 class="text-2xl font-bold text-gold-400 font-cinzel mb-4 text-center">Quest Vote</h2>
-
-              <div class="space-y-4">
-                <div class="text-center mb-4">
-                  <p class="text-medieval-parchment text-sm mb-2">
-                    {{ gameStore.questVoteMessage }}
-                  </p>
-                  <p class="text-stone-400 text-xs">Quest {{ gameStore.currentRound }}</p>
-                </div>
-
-                <div v-if="!gameStore.hasVotedOnQuest" class="flex gap-4 justify-center">
-                  <avalon-button
-                    @click="handleQuestVote(true)"
-                    class="bg-good-600 hover:bg-good-700 border-good-500"
-                  >
-                    ✓ Success
-                  </avalon-button>
-                  <avalon-button
-                    v-if="gameStore.canFailQuest"
-                    @click="handleQuestVote(false)"
-                    class="bg-evil-600 hover:bg-evil-700 border-evil-500"
-                  >
-                    ✗ Fail
-                  </avalon-button>
-                </div>
-
-                <div v-else class="text-center">
-                  <p class="text-gold-400 font-semibold">You have voted! Waiting for others...</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex justify-center gap-4 mt-8">
-              <avalon-button @click="showRoleDialog = true">
-                Your Identity
-              </avalon-button>
-              <avalon-button @click="openVoteHistory" class="bg-stone-700 hover:bg-stone-600">
-                View Vote History
-              </avalon-button>
-              <avalon-button @click="openQuestHistory" class="bg-stone-700 hover:bg-stone-600">
-                View Quest History
-              </avalon-button>
-              <avalon-button
-                v-if="gameStore.isAssassinPhase"
-                @click="openAssassinDialog"
-                class="bg-red-700 hover:bg-red-800 border-red-600"
-              >
-                💀 Assassinate Target
-              </avalon-button>
-            </div>
-
           </div>
         </div>
       </div>
     </div>
-
   </div>
+
+  <div class="flex flex-col justify-center gap-4 sticky bottom-0 left-0 p-5 bg-stone-800">
+    <div class="flex justify-center gap-4">
+      <avalon-button @click="showRoleDialog = true">
+        Identity
+      </avalon-button>
+      <avalon-button @click="openVoteHistory" class="bg-stone-700 text-stone-500 hover:bg-stone-600">
+        History
+      </avalon-button>
+    </div>
+    <div class="flex justify-center">
+      <avalon-button
+          v-if="gameStore.isAssassinPhase"
+          @click="openAssassinDialog"
+          class="bg-transparent text-evil-300 hover:bg-red-800 border-red-600"
+      >
+        Kill
+      </avalon-button>
+    </div>
+  </div>
+
 </template>
 
 <style scoped>

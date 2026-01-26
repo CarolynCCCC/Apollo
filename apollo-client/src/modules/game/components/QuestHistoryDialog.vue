@@ -1,7 +1,5 @@
 <template>
-  <div class="bg-stone-900 rounded-lg border border-gold-600 p-6 max-w-4xl max-h-[80vh] overflow-y-auto">
-    <h2 class="text-3xl font-bold text-gold-400 font-cinzel mb-6 text-center">Quest History</h2>
-
+  <div class="max-w-4xl max-h-[80vh]">
     <div v-if="Object.keys(gameStore.questResultHistory).length === 0" class="text-center text-stone-400 py-8">
       <p>No quest results yet</p>
     </div>
@@ -16,7 +14,7 @@
           'border-evil-600': quest.result === 'fail'
         }"
       >
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex flex-col items-center justify-between mb-4">
           <h3 class="text-xl font-semibold text-medieval-parchment">Quest {{ roundNum }}</h3>
           <span class="text-2xl font-bold"
                 :class="{
@@ -27,14 +25,10 @@
           </span>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="flex gap-4 mb-4">
           <div class="bg-stone-700/30 rounded p-3">
             <p class="text-xs text-stone-400 mb-1">Leader</p>
             <p class="text-medieval-parchment font-semibold">{{ quest.leaderName }}</p>
-          </div>
-          <div class="bg-stone-700/30 rounded p-3">
-            <p class="text-xs text-stone-400 mb-1">Required Fails</p>
-            <p class="text-medieval-parchment font-semibold">{{ quest.requiredFails }}</p>
           </div>
         </div>
 
@@ -77,26 +71,11 @@
         </div>
       </div>
     </div>
-
-    <div class="flex justify-center mt-6">
-      <avalon-button @click="closeDialog" class="bg-stone-700 hover:bg-stone-600">
-        Close
-      </avalon-button>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useGameStore } from '@/stores/gameStore';
-import AvalonButton from '@/shared/components/AvalonButton.vue';
-
-const emit = defineEmits<{
-  close: []
-}>();
 
 const gameStore = useGameStore();
-
-function closeDialog() {
-  emit('close');
-}
 </script>

@@ -11,7 +11,6 @@ const { dialogState, close } = useDialog();
     :width="dialogState.config.width"
     :height="dialogState.config.height"
     :title="dialogState.config.title"
-    :show-close="dialogState.config.showClose"
     @close="close"
   >
     <component

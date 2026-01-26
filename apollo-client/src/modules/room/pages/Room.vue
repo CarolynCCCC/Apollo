@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useRoomStore } from '@/stores/roomStore';
 import { usePlayerStore } from '@/stores/playerStore';
 import AvalonButton from '@/shared/components/AvalonButton.vue';
-import { gamePath, lobbyPath, roomPath } from '@/routes';
+import { gamePath, lobbyPath } from '@/routes';
 import { ROOM_STATUS } from '@/constant/api.ts';
 
 const route = useRoute();
@@ -49,7 +49,7 @@ function showNotification(message: string, duration = 3000) {
   if (notificationTimeout) {
     clearTimeout(notificationTimeout);
   }
-  notificationTimeout = window.setTimeout(() => {
+  notificationTimeout = globalThis.setTimeout(() => {
     notificationVisible.value = false;
     notificationTimeout = null;
   }, duration);
@@ -99,19 +99,20 @@ watch(
 );
 
 onMounted(() => {
-  window.addEventListener('ws:notification', handleNotification);
+  globalThis.addEventListener('ws:notification', handleNotification);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('ws:notification', handleNotification);
+  globalThis.removeEventListener('ws:notification', handleNotification);
   if (notificationTimeout) {
     clearTimeout(notificationTimeout);
   }
 });
+
 </script>
 
 <template>
-  <div class="flex h-full flex-col items-center justify-center">
+  <div class="flex min-h-[100dvh] p-5 flex-col items-center justify-center">
     <Transition name="fade">
       <div v-if="notificationVisible" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-6 py-3 rounded-lg shadow-lg z-50">
         {{ notificationMessage }}

@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-stone-900 rounded-lg border-4 p-8 max-w-2xl"
+  <div class="max-w-2xl"
        :class="{
          'border-good-600': winner === 'good',
          'border-evil-600': winner === 'evil'
@@ -12,21 +12,16 @@
           }">
         {{ winner === 'good' ? 'GOOD WINS!' : 'EVIL WINS!' }}
       </h2>
-
-      <div class="text-6xl">
-        {{ winner === 'good' ? '⚔️' : '💀' }}
-      </div>
-
       <div class="bg-stone-800/50 rounded-lg p-6">
         <p class="text-xl text-medieval-parchment mb-2">{{ message }}</p>
         <p class="text-sm text-stone-400">Reason: {{ formatReason(reason) }}</p>
       </div>
 
-      <div class="flex gap-4 justify-center">
+      <div class="flex flex-col gap-4 justify-center">
         <avalon-button @click="viewResults" class="bg-gold-600 hover:bg-gold-700">
           View Results
         </avalon-button>
-        <avalon-button @click="backToLobby" class="bg-stone-700 hover:bg-stone-600">
+        <avalon-button @click="backToLobby" class="bg-stone-500 hover:bg-stone-600">
           Back to Lobby
         </avalon-button>
       </div>

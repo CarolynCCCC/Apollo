@@ -2,6 +2,8 @@
 import AvalonButton from '@/shared/components/AvalonButton.vue'
 import { useRoomStore } from '@/stores/roomStore'
 import { useGameStore } from '@/stores/gameStore'
+import {ref} from "vue";
+import QuestHistoryDialog from "@/modules/game/components/QuestHistoryDialog.vue";
 
 // emits
 const emit = defineEmits<{
@@ -17,6 +19,8 @@ function closeDialog() {
   emit('close')
 }
 
+const isViewingVoteHistory = ref(false)
+
 function getPlayerName(playerId: number): string {
   const player = roomStore.currentRoom?.players.find(
     p => p.id === playerId
@@ -26,11 +30,31 @@ function getPlayerName(playerId: number): string {
 </script>
 
 <template>
-  <div class="bg-stone-900 rounded-lg border border-gold-600 p-6 max-w-4xl max-h-[80vh] overflow-y-auto">
-    <h2 class="text-3xl font-bold text-gold-400 font-cinzel mb-6 text-center">
-      Vote History
-    </h2>
-
+  <div>
+    <div class="flex gap-3 justify-between mb-6">
+      <AvalonButton
+          class="flex-1"
+        :class="{
+          'bg-stone-700 text-stone-500 hover:bg-stone-600': isViewingVoteHistory,
+          'bg-gold-600 hover:bg-gold-700': !isViewingVoteHistory
+        }"
+        @click="isViewingVoteHistory = false"
+      >
+        Quest
+      </AvalonButton>
+      <AvalonButton
+          class="flex-1"
+        :class="{
+          'bg-stone-700 text-stone-500 hover:bg-stone-600': !isViewingVoteHistory,
+          'bg-gold-600 hover:bg-gold-700': isViewingVoteHistory
+        }"
+        @click="isViewingVoteHistory = true"
+      >
+        Vote
+      </AvalonButton>
+    </div>
+  </div>
+  <div v-if="isViewingVoteHistory" class="max-w-4xl max-h-[80vh]">
     <div
       v-if="Object.keys(gameStore.voteHistory).length === 0"
       class="text-center text-stone-400 py-8"
@@ -60,22 +84,24 @@ function getPlayerName(playerId: number): string {
               'border-evil-600': !vote.approved
             }"
           >
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-sm text-stone-400">
+            <div class="flex flex-col gap-3 justify-between mb-3">
+              <div class="flex flex-row justify-between">
+                <span class="text-sm text-stone-400">
                 Proposal #{{ vote.proposalNumber }}
               </span>
-              <span
-                class="text-xl font-bold"
-                :class="{
+                <span class="text-sm text-stone-400">
+                {{ vote.approveCount }}-{{ vote.rejectCount }}
+              </span>
+              </div>
+              <div
+                  class="text-xl font-bold"
+                  :class="{
                   'text-good-400': vote.approved,
                   'text-evil-400': !vote.approved
                 }"
               >
                 {{ vote.approved ? 'APPROVED' : 'REJECTED' }}
-              </span>
-              <span class="text-sm text-stone-400">
-                {{ vote.approveCount }}-{{ vote.rejectCount }}
-              </span>
+              </div>
             </div>
 
             <div class="flex flex-wrap gap-2 justify-center">
@@ -112,14 +138,8 @@ function getPlayerName(playerId: number): string {
         </div>
       </div>
     </div>
-
-    <div class="flex justify-center mt-6">
-      <AvalonButton
-        class="bg-stone-700 hover:bg-stone-600"
-        @click="closeDialog"
-      >
-        Close
-      </AvalonButton>
-    </div>
+  </div>
+  <div v-else>
+    <quest-history-dialog></quest-history-dialog>
   </div>
 </template>

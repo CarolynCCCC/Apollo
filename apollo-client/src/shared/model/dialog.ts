@@ -4,7 +4,6 @@ export interface DialogConfig {
   width?: string;
   height?: string;
   title?: string;
-  showClose?: boolean;
   props?: Record<string, any>;
 }
 

@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import {computed} from 'vue';
 
 interface Props {
   open?: boolean;
   width?: string;
   height?: string;
   title?: string;
-  closeable?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   open: true,
   width: '500px',
   height: 'auto',
-  closeable: true,
 });
 
 const emit = defineEmits<{
@@ -28,13 +26,11 @@ const dialogStyle = computed(() => ({
 }));
 
 function handleClose() {
-  if (props.closeable) {
-    emit('close');
-  }
+  emit('close');
 }
 
 function handleBackdropClick(event: MouseEvent) {
-  if (event.target === event.currentTarget && props.closeable) {
+  if (event.target === event.currentTarget) {
     handleClose();
   }
 }
@@ -43,19 +39,18 @@ function handleBackdropClick(event: MouseEvent) {
 <template>
   <Teleport to="body">
     <div
-      v-if="open"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      @click="handleBackdropClick"
+        v-if="open"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+        @click="handleBackdropClick"
     >
       <div
-        class="card relative overflow-hidden"
-        :style="dialogStyle"
-        @click.stop
+          class="card relative overflow-hidden"
+          :style="dialogStyle"
+          @click.stop
       >
         <button
-          v-if="closeable"
-          class="absolute right-4 top-4 text-gold-400 hover:text-gold-300 transition-colors text-2xl leading-none cursor-pointer"
-          @click="handleClose"
+            class="absolute right-4 top-4 text-gold-400 hover:text-gold-300 transition-colors text-2xl leading-none cursor-pointer"
+            @click="handleClose"
         >
           ×
         </button>

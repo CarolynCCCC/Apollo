@@ -1,7 +1,7 @@
 <template>
-  <div class="bg-red-950/95 rounded-lg border-4 border-red-600 p-8 max-w-3xl shadow-2xl">
+  <div class="max-w-3xl shadow-2xl">
     <h2 class="text-4xl font-bold text-red-400 font-cinzel mb-6 text-center">
-      ⚔️ ASSASSIN PHASE ⚔️
+      ASSASSIN PHASE
     </h2>
 
     <div class="space-y-6">
@@ -15,7 +15,6 @@
       </div>
 
       <div class="bg-stone-900/50 rounded-lg p-6">
-        <h3 class="text-xl font-semibold text-red-300 mb-4 text-center">Select Your Target</h3>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
           <button
             v-for="target in targets"
@@ -35,19 +34,19 @@
         </div>
       </div>
 
-      <div class="flex justify-center gap-4 mt-6">
+      <div class="flex flex-col justify-center gap-4 mt-6">
         <avalon-button
           @click="handleAssassinate"
           :disabled="!selectedTargetId || isAssassinating"
-          class="bg-red-700 hover:bg-red-800 border-red-600 text-xl px-8 py-4"
+          class="bg-transparent text-evil-300 border-red-600 text-xl px-8 py-4"
           :class="{ 'opacity-50 cursor-not-allowed': !selectedTargetId || isAssassinating }"
         >
           <span v-if="isAssassinating">Assassinating...</span>
-          <span v-else>💀 KILL TARGET 💀</span>
+          <span v-else>Kill</span>
         </avalon-button>
         <avalon-button
           @click="closeDialog"
-          class="bg-stone-700 hover:bg-stone-600 border-stone-600"
+          class="bg-stone-500 hover:bg-stone-600 border-stone-600"
         >
           Close
         </avalon-button>
