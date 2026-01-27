@@ -27,6 +27,7 @@ class WinConditionService {
       winner: TEAM.GOOD,
       reason: 'three_successful_quests',
       message: 'Good wins! Three quests completed successfully.',
+      playersRole: room.players
     });
   }
 
@@ -40,6 +41,7 @@ class WinConditionService {
       winner: TEAM.EVIL,
       reason,
       message: this.getEvilVictoryMessage(reason),
+      playersRole: room.players,
     });
   }
 

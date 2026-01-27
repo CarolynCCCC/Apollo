@@ -5,8 +5,7 @@ import './styles/index.scss'
 import { router } from './index'
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { faArrowRightFromBracket } from "@fortawesome/free-solid-svg-icons";
-import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRightFromBracket, faUser } from "@fortawesome/free-solid-svg-icons";
 import piniaPersist from 'pinia-plugin-persistedstate'
 
 library.add(faArrowRightFromBracket, faUser);

@@ -79,6 +79,7 @@ export interface VoteResult {
   nextLeaderIndex?: number;
   teamMembers?: number[];
   questLeaderId?: number;
+  leaderName?: string | null;
 }
 
 export interface VoteHistory {
@@ -101,6 +102,7 @@ export interface QuestResult {
   requiredFails: number;
   teamMembers: Array<{ id: number; name?: string }>;
   leaderName?: string;
+  leaderId?: number | null;
 }
 
 export interface QuestResultHistory {

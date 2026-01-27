@@ -26,10 +26,9 @@
               'border-stone-600 bg-stone-800/30 text-stone-300 hover:border-red-700 hover:bg-stone-700/40': selectedTargetId !== target.id
             }"
           >
-            <div class="flex flex-col items-center gap-2">
-              <div v-if="selectedTargetId === target.id" class="text-red-400 text-2xl">💀</div>
-              <div>{{ target.name }}</div>
-            </div>
+            <span class="flex flex-col items-center gap-2">
+              <span class="break-words"><span class="font-bold">{{ target.id }}</span>-{{ target.name }}</span>
+            </span>
           </button>
         </div>
       </div>

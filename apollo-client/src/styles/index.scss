@@ -145,4 +145,8 @@
   .quest-fail {
     @apply bg-evil-800/30 border-l-4 border-evil-500;
   }
+
+  .break-words {
+    word-break: break-word;
+  }
 }

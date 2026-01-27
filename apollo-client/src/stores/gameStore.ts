@@ -3,6 +3,7 @@ import {Mission, VoteHistory, VoteResult, QuestResultHistory, QuestResult, GameE
 import {RoleInfo} from '@/shared/model/role';
 import {usePlayerStore} from '@/stores/playerStore.ts';
 import {useRoomStore} from '@/stores/roomStore.ts';
+import {Player} from "@/shared/model/player.ts";
 
 export const useGameStore = defineStore('game', {
     state: () => ({
@@ -26,6 +27,7 @@ export const useGameStore = defineStore('game', {
         voteHistory: {} as VoteHistory,
         currentVoteResult: null as Omit<VoteResult, 'proposalNumber'> | null,
         isQuestVotingPhase: false as boolean,
+        isQuestVotingPhaseForAll: false as boolean,
         canFailQuest: false as boolean,
         hasVotedOnQuest: false as boolean,
         questVoteMessage: null as string | null,
@@ -53,12 +55,12 @@ export const useGameStore = defineStore('game', {
 
     actions: {
         setQuestVoteRequest(questNumber: number, canFail: boolean, message: string) {
-            console.log('setQuestVoteRequest called:', {questNumber, canFail, message});
             this.isQuestVotingPhase = true;
             this.canFailQuest = canFail;
             this.questVoteMessage = message;
             this.currentRound = questNumber;
             this.hasVotedOnQuest = false;
+            this.isLeaderPhase = false;
         },
 
         setQuestVoteCast() {
@@ -73,8 +75,6 @@ export const useGameStore = defineStore('game', {
             votes: Array<{ vote: 'success' | 'fail' }>,
             requiredFails: number
         ) {
-            console.log('setQuestResult called:', {questNumber, result});
-
             const questResult: QuestResult = {
                 questNumber,
                 result,
@@ -83,9 +83,9 @@ export const useGameStore = defineStore('game', {
                 votes,
                 requiredFails,
                 teamMembers: this.proposedTeamMembers,
-                leaderName: this.leaderName || undefined,
             };
 
+            this.isQuestVotingPhaseForAll = false;
             this.questResultHistory[questNumber] = questResult;
             this.currentQuestResult = questResult;
             this.isQuestVotingPhase = false;
@@ -96,7 +96,7 @@ export const useGameStore = defineStore('game', {
                 this.failedQuests++;
             }
 
-            console.log('Quest result stored:', questResult);
+            this.isLeaderPhase = true;
         },
 
         setNextRound(
@@ -107,15 +107,13 @@ export const useGameStore = defineStore('game', {
             completedQuests: number,
             failedQuests: number
         ) {
-            console.log('setNextRound called:', {questNumber, leaderId, leaderName});
-
             this.currentRound = questNumber;
             this.leaderId = leaderId;
             this.leaderName = leaderName;
             this.currentTeamSize = teamSize;
             this.completedQuests = completedQuests;
             this.failedQuests = failedQuests;
-            this.proposalNumber = 0;
+            this.proposalNumber = 1;
             this.isVotingPhase = false;
             this.hasVoted = false;
             this.votedPlayers = [];
@@ -126,7 +124,7 @@ export const useGameStore = defineStore('game', {
             this.isLeaderPhase = true;
         },
 
-        setGameEnded(winner: 'good' | 'evil', reason: string, message: string) {
+        setGameEnded(winner: 'good' | 'evil', reason: string, message: string, players: Player[]) {
             console.log('setGameEnded called:', {winner, reason, message});
 
             this.gameEnded = {
@@ -134,6 +132,14 @@ export const useGameStore = defineStore('game', {
                 reason,
                 message,
             };
+
+            if (useRoomStore().currentRoom != null) {
+                useRoomStore().currentRoom!.players = players;
+            }
+        },
+
+        setAssassinPhaseStarted() {
+            this.isLeaderPhase = false
         },
 
         setAssassinTargetRequest(eligibleTargets: Array<{ id: number; name?: string }>, message: string) {
@@ -150,6 +156,7 @@ export const useGameStore = defineStore('game', {
             this.missions = missions;
             this.currentTeamSize = teamSize;
             this.isLeaderPhase = true;
+            this.leaderName = useRoomStore().getPlayerNameById(leaderId)
         },
 
         addVoteCast(playerId: number, playerName: string | undefined, approve: boolean, votesCount: number, totalPlayers: number) {
@@ -191,10 +198,8 @@ export const useGameStore = defineStore('game', {
             nextLeaderId?: number,
             nextLeaderIndex?: number
         ) {
-            console.log('setVoteResult called:', {approved, nextLeaderId, nextLeaderIndex});
-
             const voteResult: VoteResult = {
-                proposalNumber: this.proposalNumber,
+                proposalNumber: approved ? this.proposalNumber : this.proposalNumber++,
                 approved,
                 approveCount,
                 rejectCount,
@@ -203,6 +208,7 @@ export const useGameStore = defineStore('game', {
                 nextLeaderIndex,
                 questLeaderId: this.leaderId ?? 0,
                 teamMembers: this.proposedTeam,
+                leaderName: useRoomStore().getPlayerNameById(this.leaderId ?? 0),
             };
 
             if (!this.voteHistory[this.currentRound]) {
@@ -224,11 +230,15 @@ export const useGameStore = defineStore('game', {
 
             if (!approved && nextLeaderId !== undefined) {
                 this.leaderId = nextLeaderId;
+                this.isLeaderPhase = true;
                 console.log('Updated leaderId to:', nextLeaderId);
+            } else {
+                this.isQuestVotingPhaseForAll = true;
+                this.questResultHistory[this.currentRound].leaderId = this.leaderId;
+                this.questResultHistory[this.currentRound].leaderName = useRoomStore().getPlayerNameById(this.leaderId) ?? "";
             }
 
             this.isVotingPhase = false;
-            this.isLeaderPhase = true;
         },
 
         setTeamVoteCast() {

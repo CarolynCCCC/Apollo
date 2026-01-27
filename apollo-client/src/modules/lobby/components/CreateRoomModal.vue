@@ -134,11 +134,11 @@ function handleCancel() {
       <label class="block text-gold-400 text-sm font-semibold mb-3">
         Optional Characters
       </label>
-      <div class="space-y-2">
+      <div class="flex flex-wrap">
         <div
             v-for="option in optionalCharactersOptions"
             :key="option.value"
-            class="flex items-center"
+            class="flex items-center pb-1 w-[50%]"
         >
           <input
               :id="option.value"

@@ -150,7 +150,7 @@ onUnmounted(() => {
                   {{ index + 1 }}
                 </div>
                 <div class="flex flex-col items-center">
-                  <span class="font-semibold" :class="{
+                  <span class="font-semibold break-words" :class="{
                     'text-medieval-parchment': !roomStore.isRoomHost(player.id),
                     'text-gold-500': roomStore.isRoomHost(player.id)
                   }">
