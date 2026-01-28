@@ -4,9 +4,6 @@ import {WS_MESSAGE_TYPES} from '@/constant/websocket';
 import {ROOM_STATUS} from '@/constant/api.ts';
 import {useGameStore} from '@/stores/gameStore.ts';
 
-let wsControls: ReturnType<typeof useWebSocketCore> | null = null;
-let heartbeatInterval: number | null = null;
-
 function getWsUrl() {
     if (import.meta.env.VITE_WS_BASE_URL) {
         return `${import.meta.env.VITE_WS_BASE_URL}/ws`;
@@ -67,8 +64,6 @@ const messageHandlers: Record<string, (message: any) => void> = {
             message.questNumber,
             message.proposalNumber
         );
-    },
-    [WS_MESSAGE_TYPES.REQUEST_TEAM_VOTE]: (message) => {
     },
     [WS_MESSAGE_TYPES.TEAM_VOTE_CAST]: (message) => {
         const gameStore = useGameStore();
@@ -182,6 +177,9 @@ function handleMessage(message: any) {
 }
 
 export function useWebSocket() {
+    let wsControls: ReturnType<typeof useWebSocketCore> | null = null;
+    let heartbeatInterval: ReturnType<typeof setTimeout> | null = null;
+
     function connect(roomId: string, playerId: number): Promise<void> {
         return new Promise((resolve, reject) => {
             if (!roomId || !playerId) {
@@ -190,7 +188,6 @@ export function useWebSocket() {
             }
 
             if (wsControls?.status.value === 'OPEN') {
-                console.log('WebSocket already connected:', {playerId, roomId});
                 resolve();
                 return;
             }
@@ -231,7 +228,7 @@ export function useWebSocket() {
                     wsControls = null;
                 },
                 onError(_ws, error) {
-                    reject(error);
+                    console.error('WebSocket error:', error);
                 },
             });
         });
@@ -246,7 +243,7 @@ export function useWebSocket() {
             try {
                 wsControls.close();
             } catch (e) {
-
+                console.log('Error closing WebSocket:', e);
             }
             wsControls = null;
         }

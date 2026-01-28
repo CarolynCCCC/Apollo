@@ -50,7 +50,7 @@ watch(
         <input v-model="playerName" type="text" class="input-field w-full" placeholder="Enter Your Name" />
       </div>
     </div>
-    <div class="flex flex-col justify-end flex-wrap gap-5 sm:flex-row">
+    <div class="flex flex-col justify-end flex-wrap gap-5 sm:flex-row py-2">
       <AvalonButton
         variant="secondary"
         :disabled="isLoading"

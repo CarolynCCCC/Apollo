@@ -165,7 +165,7 @@ function handleCancel() {
 
     </div>
 
-    <div class="flex flex-col justify-end flex-wrap gap-5 sm:flex-row">
+    <div class="flex flex-col justify-end flex-wrap gap-5 py-2 sm:flex-row">
       <AvalonButton
           variant="secondary"
           :disabled="isSubmitting"

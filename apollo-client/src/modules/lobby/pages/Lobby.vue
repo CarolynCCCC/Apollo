@@ -28,6 +28,7 @@ function openJoinRoomDialog() {
 
 onMounted(() => {
   roomStore.clearState();
+  roomStore.fetchAvailableRooms();
 })
 
 watch(
@@ -50,6 +51,17 @@ watch(
     <div>
       <h1 class="text-4xl font-bold mb-4">Welcome to Avalon Lobby</h1>
       <p class="text-lg">Join an existing room or create a new one to start playing!</p>
+    </div>
+    <div>
+      <span>Rooms</span>
+      <div v-if="roomStore.availableRooms.length" v-for="availableRoom in roomStore.availableRooms">
+        <p class="text-md">Room: {{ availableRoom.id }} - Players: {{ availableRoom.players.length }}/{{
+            availableRoom.config.maxPlayers
+          }}</p>
+      </div>
+      <div v-else>
+        No available rooms at the moment.
+      </div>
     </div>
     <div class="flex flex-col space-y-4 pb-8">
       <avalon-button @button-clicked="openCreateRoomDialog()">

@@ -235,7 +235,7 @@ class RoomService {
 
     if (request.numberOfPlayers !== undefined) {
       if (!Number.isInteger(request.numberOfPlayers)) {
-        throw new Error(ERROR_MESSAGES.PLAYERS_MUST_BE_INTEGER);
+        throw new TypeError(ERROR_MESSAGES.PLAYERS_MUST_BE_INTEGER);
       }
       if (request.numberOfPlayers < MIN_PLAYERS || request.numberOfPlayers > MAX_PLAYERS) {
         throw new Error(`numberOfPlayers must be between ${MIN_PLAYERS} and ${MAX_PLAYERS}`);
