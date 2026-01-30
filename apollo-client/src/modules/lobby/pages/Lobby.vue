@@ -61,23 +61,27 @@ watch(
       <h1 class="text-4xl font-bold mb-4">Welcome to Avalon Lobby</h1>
       <p class="text-lg">Join an existing room or create a new one to start playing!</p>
     </div>
-    <div>
+    <div class="flex flex-col gap-3">
       <div class="flex justify-between">
-        <span>Rooms</span>
-        <span @click="fetchRooms()" class="cursor-pointer text-gold-600 text-xl">&#x21bb;</span>
+        <span class="text-lg">Rooms</span>
+        <span @click="fetchRooms()" class="cursor-pointer text-gold-600 text-lg">&#x21bb;</span>
       </div>
 
-      <div v-if="roomStore.availableRooms.length" v-for="availableRoom in roomStore.availableRooms">
-        <p @click="joinRoom(availableRoom.id)" class="text-md">
-          <span class="text-gold-600">{{ availableRoom.id }}</span> - Players: {{
-            availableRoom.players.length
-          }}/{{
-            availableRoom.config.maxPlayers
-          }}</p>
+      <div class="flex flex-col gap-3">
+        <div v-if="roomStore.availableRooms.length" v-for="availableRoom in roomStore.availableRooms">
+          <div @click="joinRoom(availableRoom.id)" class="text-md">
+            <span class="text-gold-600 font-bold">{{ availableRoom.id }}</span> - Players: {{
+              availableRoom.players.length
+            }}/{{
+              availableRoom.config.maxPlayers
+            }}</div>
+        </div>
+        <div v-else>
+          No available rooms at the moment.
+        </div>
       </div>
-      <div v-else>
-        No available rooms at the moment.
-      </div>
+
+
     </div>
     <div class="flex flex-col space-y-4 pb-8">
       <avalon-button @button-clicked="openCreateRoomDialog()">

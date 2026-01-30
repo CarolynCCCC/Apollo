@@ -29,7 +29,7 @@ class GameService {
       throw new Error(ERROR_MESSAGES.ROOM_NOT_FOUND);
     }
 
-    if (room.status !== ROOM_STATUS.LOBBY) {
+    if (room.status !== ROOM_STATUS.LOBBY && room.status !== ROOM_STATUS.FINISHED) {
       throw new Error(ERROR_MESSAGES.GAME_NOT_IN_LOBBY);
     }
 
@@ -65,7 +65,7 @@ class GameService {
       throw new Error(ERROR_MESSAGES.NOT_HOST);
     }
 
-    if (room.status !== ROOM_STATUS.LOBBY) {
+    if (room.status !== ROOM_STATUS.LOBBY && room.status !== ROOM_STATUS.FINISHED) {
       throw new Error(ERROR_MESSAGES.GAME_NOT_IN_LOBBY);
     }
 

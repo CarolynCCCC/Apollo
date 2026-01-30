@@ -244,6 +244,15 @@ export const useRoomStore = defineStore('room', {
                 const gameStore = useGameStore();
                 gameStore.clearGameState();
             },
+
+            inactiveAllPlayers() {
+                if (!this.currentRoom) return;
+                this.currentRoom.players =
+                    this.currentRoom?.players.map(player => ({
+                        ...player,
+                        ready: false,
+                    })) ?? []
+            }
         },
     })
 ;

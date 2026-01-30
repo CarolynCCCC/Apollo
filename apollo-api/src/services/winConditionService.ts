@@ -20,6 +20,10 @@ class WinConditionService {
   handleGoodVictory(room: Room): void {
     const updatedRoom = RoomState.updateRoom(room.id, (room) => {
       room.status = ROOM_STATUS.FINISHED;
+      room.players = room.players.map((player) => ({
+        ...player,
+        ready: player.id === room.hostId,
+      }));
     });
 
     GameSocket.broadcastToRoom(updatedRoom.id, {
@@ -27,13 +31,17 @@ class WinConditionService {
       winner: TEAM.GOOD,
       reason: 'three_successful_quests',
       message: 'Good wins! Three quests completed successfully.',
-      playersRole: room.players
+      playersRole: room.players,
     });
   }
 
   handleEvilVictory(room: Room, reason: string): void {
     const updatedRoom = RoomState.updateRoom(room.id, (room) => {
       room.status = ROOM_STATUS.FINISHED;
+      room.players = room.players.map((player) => ({
+        ...player,
+        ready: player.id === room.hostId,
+      }));
     });
 
     GameSocket.broadcastToRoom(updatedRoom.id, {

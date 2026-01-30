@@ -14,6 +14,9 @@ import QuestResultDialog from "@/modules/game/components/QuestResultDialog.vue";
 import VoteResultDialog from "@/modules/game/components/VoteResultDialog.vue";
 import {onClickOutside} from "@vueuse/core";
 import {useWebSocket} from "@/shared/composables/useWebSocket.ts";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import {roomPath} from "@/routes.ts";
+import {router} from "@/index.ts";
 
 const route = useRoute();
 const {open, close} = useDialog();
@@ -209,16 +212,32 @@ watch(() => gameStore.currentQuestResult, (questResult) => {
   }
 });
 
+function backToLobby() {
+  router.push({
+    name: roomPath.room,
+    params: {
+      roomId: roomStore.currentRoom?.id
+    }
+  })
+  gameStore.clearGameState();
+}
+
+function openGameEndedDialog() {
+  const gameEndedData = gameStore.gameEnded;
+  open(GameEndedDialog, {
+    props: {
+      winner: gameEndedData?.winner,
+      reason: gameEndedData?.reason,
+      message: gameEndedData?.message,
+      onClose: close
+    }
+  });
+}
+
 watch(() => gameStore.gameEnded, (gameEndedData) => {
   if (gameEndedData) {
-    open(GameEndedDialog, {
-      props: {
-        winner: gameEndedData.winner,
-        reason: gameEndedData.reason,
-        message: gameEndedData.message,
-        onClose: close
-      }
-    });
+    openGameEndedDialog();
+    roomStore.inactiveAllPlayers();
   }
 });
 
@@ -318,13 +337,16 @@ watch(() => gameStore.gameEnded, (gameEndedData) => {
             </div>
           </div>
         </div>
-        <div class="flex flex-row justify-end gap-2 text-right">
+        <div class="flex flex-row items-center justify-end gap-2 text-right">
           <span class="break-words max-w-40">
             {{ roomStore.getPlayerNameById(playerStore.playerId) }}
           </span>
           <div class="rounded-[50%] bg-stone-700 w-6 h-6 text-stone-400 font-semibold flex align-center justify-center">
             {{ playerStore.playerId }}
           </div>
+          <button v-if="gameStore.gameEnded" class="cursor-pointer text-gold-400" @click="backToLobby()">
+            <font-awesome-icon icon="arrow-right-from-bracket"/>
+          </button>
         </div>
       </div>
 
