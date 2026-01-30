@@ -68,7 +68,8 @@ watch(
       </div>
 
       <div v-if="roomStore.availableRooms.length" v-for="availableRoom in roomStore.availableRooms">
-        <p @click="joinRoom(availableRoom.id)" class="text-md">Room: {{ availableRoom.id }} - Players: {{
+        <p @click="joinRoom(availableRoom.id)" class="text-md">
+          <span class="text-gold-600">{{ availableRoom.id }}</span> - Players: {{
             availableRoom.players.length
           }}/{{
             availableRoom.config.maxPlayers
