@@ -31,6 +31,15 @@ onMounted(() => {
   roomStore.fetchAvailableRooms();
 })
 
+function fetchRooms() {
+  roomStore.fetchAvailableRooms()
+}
+
+function joinRoom(roomId: string) {
+  roomStore.setRoomIdToJoin(roomId);
+  openJoinRoomDialog();
+}
+
 watch(
     () => roomStore.joinRoomSuccess,
     (success) => {
@@ -53,9 +62,15 @@ watch(
       <p class="text-lg">Join an existing room or create a new one to start playing!</p>
     </div>
     <div>
-      <span>Rooms</span>
+      <div class="flex justify-between">
+        <span>Rooms</span>
+        <span @click="fetchRooms()" class="cursor-pointer text-gold-600 text-xl">&#x21bb;</span>
+      </div>
+
       <div v-if="roomStore.availableRooms.length" v-for="availableRoom in roomStore.availableRooms">
-        <p class="text-md">Room: {{ availableRoom.id }} - Players: {{ availableRoom.players.length }}/{{
+        <p @click="joinRoom(availableRoom.id)" class="text-md">Room: {{ availableRoom.id }} - Players: {{
+            availableRoom.players.length
+          }}/{{
             availableRoom.config.maxPlayers
           }}</p>
       </div>

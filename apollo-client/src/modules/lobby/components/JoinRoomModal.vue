@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
-import { useDialog } from '@/shared/composables/useDialog';
-import { useRoomStore } from '@/stores/roomStore';
-import type { JoinRoomRequest } from '@/shared/model/room';
+import {ref, computed, watch, onMounted} from 'vue';
+import {useDialog} from '@/shared/composables/useDialog';
+import {useRoomStore} from '@/stores/roomStore';
+import type {JoinRoomRequest} from '@/shared/model/room';
 import AvalonButton from '@/shared/components/AvalonButton.vue';
 
-const { close } = useDialog();
+const {close} = useDialog();
 const roomStore = useRoomStore();
 
-const roomId = ref('');
+const roomId = ref(roomStore.roomIdToJoin);
 const playerName = ref('');
 
 const isLoading = computed(() => roomStore.isLoading);
@@ -23,16 +23,15 @@ function submit() {
 }
 
 onMounted(() => {
-  roomStore.clearState();
 })
 
 watch(
-  () => roomStore.joinRoomSuccess,
-  (success) => {
-    if (success) {
-      close();
+    () => roomStore.joinRoomSuccess,
+    (success) => {
+      if (success) {
+        close();
+      }
     }
-  }
 );
 </script>
 
@@ -41,26 +40,26 @@ watch(
     <div class="px-2">
       <div class="mb-3">
         <label class="block text-gold-400 text-sm font-semibold mb-2">Room Id *</label>
-        <input v-model="roomId" type="text" class="input-field w-full" placeholder="Enter room id" />
+        <input v-model="roomId" type="text" class="input-field w-full" placeholder="Enter room id"/>
       </div>
     </div>
     <div class="px-2">
       <div class="mb-4">
         <label class="block text-gold-400 text-sm font-semibold mb-2">Player Name *</label>
-        <input v-model="playerName" type="text" class="input-field w-full" placeholder="Enter Your Name" />
+        <input v-model="playerName" type="text" class="input-field w-full" placeholder="Enter Your Name"/>
       </div>
     </div>
     <div class="flex flex-col justify-end flex-wrap gap-5 sm:flex-row py-2">
       <AvalonButton
-        variant="secondary"
-        :disabled="isLoading"
-        @button-clicked="close()"
+          variant="secondary"
+          :disabled="isLoading"
+          @button-clicked="close()"
       >
         Cancel
       </AvalonButton>
       <AvalonButton
-        :disabled="isLoading"
-        @button-clicked="submit()"
+          :disabled="isLoading"
+          @button-clicked="submit()"
       >
         Join
       </AvalonButton>
