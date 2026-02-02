@@ -234,8 +234,10 @@ export const useGameStore = defineStore('game', {
                 console.log('Updated leaderId to:', nextLeaderId);
             } else {
                 this.isQuestVotingPhaseForAll = true;
-                this.questResultHistory[this.currentRound].leaderId = this.leaderId;
-                this.questResultHistory[this.currentRound].leaderName = useRoomStore().getPlayerNameById(this.leaderId) ?? "";
+                this.questResultHistory[this.currentRound] ??= {
+                    leaderId: this.leaderId,
+                    leaderName: useRoomStore().getPlayerNameById(this.leaderId) ?? "",
+                } as any;
             }
 
             this.isVotingPhase = false;

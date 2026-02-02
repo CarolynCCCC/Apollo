@@ -30,8 +30,11 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
+import {useRouter} from 'vue-router';
 import AvalonButton from '@/shared/components/AvalonButton.vue';
+import {roomPath} from "@/routes.ts";
+import {useRoomStore} from "@/stores/roomStore.ts";
+import {useGameStore} from "@/stores/gameStore.ts";
 
 const props = defineProps<{
   winner: 'good' | 'evil';
@@ -47,7 +50,7 @@ const router = useRouter();
 
 function formatReason(reason: string): string {
   return reason.split('_').map(word =>
-    word.charAt(0).toUpperCase() + word.slice(1)
+      word.charAt(0).toUpperCase() + word.slice(1)
   ).join(' ');
 }
 
@@ -55,8 +58,16 @@ function viewResults() {
   emit('close');
 }
 
+const roomStore = useRoomStore();
+
 function backToLobby() {
-  router.push('/');
+  router.push({
+    name: roomPath.room,
+    params: {
+      roomId: roomStore.currentRoom?.id
+    }
+  })
   emit('close');
+  useGameStore().clearGameState();
 }
 </script>

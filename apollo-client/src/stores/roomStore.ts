@@ -14,6 +14,7 @@ export const useRoomStore = defineStore('room', {
             lastCreatedRoomId: null as string | null,
             joinRoomSuccess: false as boolean,
             playerId: 0 as number,
+            roomIdToJoin: '' as string,
         }),
         persist: true,
 
@@ -30,6 +31,10 @@ export const useRoomStore = defineStore('room', {
         },
 
         actions: {
+            setRoomIdToJoin(roomId: string) {
+                this.roomIdToJoin = roomId;
+            },
+
             setCurrentRoom(room: Room | null) {
                 this.currentRoom = room;
             },
@@ -239,6 +244,15 @@ export const useRoomStore = defineStore('room', {
                 const gameStore = useGameStore();
                 gameStore.clearGameState();
             },
+
+            inactiveAllPlayers() {
+                if (!this.currentRoom) return;
+                this.currentRoom.players =
+                    this.currentRoom?.players.map(player => ({
+                        ...player,
+                        ready: false,
+                    })) ?? []
+            }
         },
     })
 ;
