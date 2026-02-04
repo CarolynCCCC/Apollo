@@ -86,7 +86,8 @@ export const useGameStore = defineStore('game', {
             };
 
             this.isQuestVotingPhaseForAll = false;
-            this.questResultHistory[questNumber] = questResult;
+            this.questResultHistory[questNumber] = {...this.questResultHistory[questNumber], ...questResult};
+            console.log(this.questResultHistory);
             this.currentQuestResult = questResult;
             this.isQuestVotingPhase = false;
 
@@ -231,7 +232,6 @@ export const useGameStore = defineStore('game', {
             if (!approved && nextLeaderId !== undefined) {
                 this.leaderId = nextLeaderId;
                 this.isLeaderPhase = true;
-                console.log('Updated leaderId to:', nextLeaderId);
             } else {
                 this.isQuestVotingPhaseForAll = true;
                 this.questResultHistory[this.currentRound] ??= {
@@ -239,6 +239,9 @@ export const useGameStore = defineStore('game', {
                     leaderName: useRoomStore().getPlayerNameById(this.leaderId) ?? "",
                 } as any;
             }
+
+            console.log("quest result history")
+            console.log(this.questResultHistory)
 
             this.isVotingPhase = false;
         },

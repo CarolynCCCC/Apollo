@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import {reactive, computed} from 'vue';
+import {reactive, computed, ref} from 'vue';
 import AvalonButton from '@/shared/components/AvalonButton.vue';
 import {useRoomStore} from '@/stores/roomStore';
 import {MIN_PLAYERS, MAX_PLAYERS, PLAYER_ALIGNMENT_COUNT, ROLES} from '@/constant/roles';
+import {OptionalCharacter} from "@/shared/model/role.ts";
 
 const emit = defineEmits<{
   close: [];
@@ -14,10 +15,10 @@ const isSubmitting = false;
 const form = reactive({
   playerName: '',
   numberOfPlayers: null as number | null,
-  optionalCharacters: [] as string[],
+  optionalCharacters: [] as OptionalCharacter[],
 });
 
-const optionalCharactersOptions = [
+const optionalCharactersOptions: { value: OptionalCharacter, label: string }[] = [
   {value: 'Percival', label: 'Percival'},
   {value: 'Morgana', label: 'Morgana'},
   {value: 'Mordred', label: 'Mordred'},
@@ -32,11 +33,11 @@ const percivalRuleWarning = computed(() => {
   return hasPercival && !hasEvilOptional;
 });
 
-const isFormValid = computed(() => {
-  const nameValid = form.playerName.trim() !== '';
+const touched = ref(false);
 
-  return nameValid && !percivalRuleWarning.value;
-});
+const errors = computed(() => ({
+  playerName: (form.playerName.trim() === "" && touched.value) ? 'Player name is required.' : '',
+}));
 
 const minimumPlayers = computed(() => {
   if (form.optionalCharacters.length === 0) {
@@ -62,7 +63,7 @@ const showMinPlayerWarning = computed(() => {
   return form.optionalCharacters.length > 0 && minimumPlayers.value > MIN_PLAYERS;
 });
 
-function toggleCharacter(character: string) {
+function toggleCharacter(character: OptionalCharacter) {
   const index = form.optionalCharacters.indexOf(character);
   if (index > -1) {
     form.optionalCharacters.splice(index, 1);
@@ -72,7 +73,9 @@ function toggleCharacter(character: string) {
 }
 
 function handleCreateRoom() {
-  if (!isFormValid.value || roomStore.isLoading) {
+  touched.value = true;
+
+  if (roomStore.isLoading || errors.value.playerName) {
     return;
   }
 
@@ -97,43 +100,43 @@ function handleCancel() {
 <template>
   <div class="space-y-6 flex flex-col">
     <div class="px-2">
-      <label class="block text-gold-400 text-sm font-semibold mb-2">
+      <label for="playerName" class="block text-gold-400 text-sm font-semibold mb-2">
         Player Name *
       </label>
-      <input
-          v-model="form.playerName"
-          type="text"
-          class="input-field w-full"
-          placeholder="Enter your name"
-          :disabled="roomStore.isLoading"
+      <input name="playerName"
+             v-model="form.playerName"
+             type="text"
+             class="input-field w-full"
+             placeholder="Enter your name"
+             :disabled="roomStore.isLoading"
       />
+      <p v-if="errors.playerName" class="text-evil-500 text-xs mt-1 font-semibold">
+        ⚠ {{ errors.playerName }}
+      </p>
     </div>
 
     <div class="px-2">
-      <label class="block text-gold-400 text-sm font-semibold mb-2">
+      <label for="playerNumbers" class="block text-gold-400 text-sm font-semibold mb-2">
         Number of Players
       </label>
-      <input
-          v-model.number="form.numberOfPlayers"
-          type="number"
-          :min="minimumPlayers"
-          max="10"
-          class="input-field w-full"
-          :placeholder="`${minimumPlayers}-10`"
-          :disabled="roomStore.isLoading"
+      <input name="playerNumbers"
+             v-model.number="form.numberOfPlayers"
+             type="number"
+             :min="minimumPlayers"
+             max="10"
+             class="input-field w-full"
+             :placeholder="`${minimumPlayers}-10`"
+             :disabled="roomStore.isLoading"
       />
-      <p class="text-stone-400 text-xs mt-1">
-        Leave empty for dynamic player count ({{ minimumPlayers }}-10)
-      </p>
-      <p v-if="showMinPlayerWarning" class="text-gold-500 text-xs mt-1 font-semibold">
+      <p v-if="showMinPlayerWarning" class="text-evil-400 text-xs mt-1 font-semibold">
         ⚠ Minimum {{ minimumPlayers }} players required for selected characters
       </p>
     </div>
 
     <div class="px-2">
-      <label class="block text-gold-400 text-sm font-semibold mb-3">
+      <span class="block text-gold-400 text-sm font-semibold mb-3">
         Optional Characters
-      </label>
+      </span>
       <div class="flex flex-wrap">
         <div
             v-for="option in optionalCharactersOptions"
@@ -156,16 +159,13 @@ function handleCancel() {
           </label>
         </div>
       </div>
-      <p class="text-stone-400 text-xs mt-2">
-        Select optional characters to include in the game
-      </p>
       <p v-if="percivalRuleWarning" class="text-red-500 text-xs mt-1 font-semibold">
         ⚠ If you select Percival, you must also select Morgana or Mordred
       </p>
 
     </div>
 
-    <div class="flex flex-col justify-end flex-wrap gap-5 py-2 sm:flex-row">
+    <div class="flex flex-col justify-end flex-wrap gap-5 py-2 pb-4 sm:flex-row">
       <AvalonButton
           variant="secondary"
           :disabled="isSubmitting"
@@ -174,7 +174,7 @@ function handleCancel() {
         Cancel
       </AvalonButton>
       <AvalonButton
-          :disabled="!isFormValid || isSubmitting"
+          :disabled="isSubmitting"
           @button-clicked="handleCreateRoom"
       >
         {{ isSubmitting ? 'Creating...' : 'Create & Join' }}
