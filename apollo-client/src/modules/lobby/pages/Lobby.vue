@@ -69,12 +69,16 @@ watch(
 
       <div class="flex flex-col gap-3">
         <div v-if="roomStore.availableRooms.length" v-for="availableRoom in roomStore.availableRooms">
-          <div @click="joinRoom(availableRoom.id)" class="text-md">
-            <span class="text-gold-600 font-bold">{{ availableRoom.id }}</span> - Players: {{
-              availableRoom.players.length
-            }}/{{
-              availableRoom.config.maxPlayers
-            }}</div>
+          <div class="text-md flex gap-5 items-center">
+            <span>
+              <span class="text-gold-600 font-bold">{{ availableRoom.id }}</span> - Players: {{
+                availableRoom.players.length
+              }}/{{
+                availableRoom.config.maxPlayers
+              }}
+            </span>
+            <span class="cursor-pointer font-bold text-gold-700 text-xl" @click="joinRoom(availableRoom.id)">Join</span>
+          </div>
         </div>
         <div v-else>
           No available rooms at the moment.

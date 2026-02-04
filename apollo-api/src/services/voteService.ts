@@ -144,8 +144,6 @@ class VoteService {
 
   private handleRejectedTeam(room: Room): void {
     const updatedRoom = RoomState.updateRoom(room.id, (room) => {
-      room.gameState.currentProposalNumber++;
-
       if (room.gameState.currentProposalNumber < 5) {
         room.gameState.currentLeaderIndex =
           (room.gameState.currentLeaderIndex + 1) % room.players.length;

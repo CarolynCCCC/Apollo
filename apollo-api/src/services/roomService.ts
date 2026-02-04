@@ -1,14 +1,24 @@
-import crypto from 'crypto';
-import { CreateRoomRequest, JoinRoomRequest, LeaveRoomRequest, Room } from '../model/room';
+import crypto from 'node:crypto';
+import {
+  CreateRoomRequest,
+  JoinRoomRequest,
+  LeaveRoomRequest,
+  Room,
+} from '../model/room';
 import { OptionalCharacter } from '../model/role';
-import { MAX_PLAYERS, MIN_PLAYERS, OPTIONAL_CHARACTERS, PLAYER_ALIGNMENT_COUNT, ROLES } from '../constant/roles';
+import {
+  MAX_PLAYERS,
+  MIN_PLAYERS,
+  OPTIONAL_CHARACTERS,
+  PLAYER_ALIGNMENT_COUNT,
+  ROLES,
+} from '../constant/roles';
 import { ERROR_MESSAGES, ROOM_STATUS } from '../constant/api';
 import { WS_MESSAGE_TYPES } from '../constant/websocket';
 import config from '../config/config';
 import RoomState from '../state/RoomState';
 import GameSocket from '../ws/GameSocket';
 import { createInitialGameState } from '../utils/gameStateUtils';
-import { joinRoom } from '../controller/roomController';
 
 interface ICleanupService {
   clearWarning(playerId: number, roomId: string): void;
@@ -18,8 +28,7 @@ class RoomService {
   private static instance: RoomService;
   private cleanupService?: ICleanupService;
 
-  private constructor() {
-  }
+  private constructor() {}
 
   static getInstance(): RoomService {
     if (!RoomService.instance) {
@@ -102,7 +111,7 @@ class RoomService {
     RoomState.deleteRoom(roomId);
   }
 
-  joinRoom(request: JoinRoomRequest): { room: Room, playerId: number} {
+  joinRoom(request: JoinRoomRequest): { room: Room; playerId: number } {
     let room: Room | undefined;
 
     if (request.roomId) {
@@ -121,7 +130,10 @@ class RoomService {
       throw new Error(ERROR_MESSAGES.GAME_ALREADY_STARTED);
     }
 
-    if (room.config.numberOfPlayers && room.players.length >= room.config.numberOfPlayers) {
+    if (
+      room.config.numberOfPlayers &&
+      room.players.length >= room.config.numberOfPlayers
+    ) {
       throw new Error(ERROR_MESSAGES.ROOM_FULL);
     }
 
@@ -168,7 +180,7 @@ class RoomService {
 
     const updatedRoom = RoomState.updateRoom(request.roomId, (room) => {
       room.players = room.players.filter((p) => p.id !== request.playerId);
-      if(room.players.length) {
+      if (room.players.length) {
         room.hostId = room.players[0].id;
       }
     });
@@ -192,7 +204,10 @@ class RoomService {
     const availableRooms: Room[] = [];
 
     allRooms.forEach((room) => {
-      if (room.status === ROOM_STATUS.LOBBY) {
+      if (
+        room.status === ROOM_STATUS.LOBBY ||
+        room.status === ROOM_STATUS.FINISHED
+      ) {
         const maxPlayers = room.config.numberOfPlayers || MAX_PLAYERS;
         if (room.players.length < maxPlayers) {
           availableRooms.push(room);
@@ -202,7 +217,6 @@ class RoomService {
 
     return availableRooms;
   }
-
 
   private findAvailableRoom(): Room | undefined {
     const allRooms = RoomState.getAllRooms();
@@ -237,21 +251,33 @@ class RoomService {
       if (!Number.isInteger(request.numberOfPlayers)) {
         throw new TypeError(ERROR_MESSAGES.PLAYERS_MUST_BE_INTEGER);
       }
-      if (request.numberOfPlayers < MIN_PLAYERS || request.numberOfPlayers > MAX_PLAYERS) {
-        throw new Error(`numberOfPlayers must be between ${MIN_PLAYERS} and ${MAX_PLAYERS}`);
+      if (
+        request.numberOfPlayers < MIN_PLAYERS ||
+        request.numberOfPlayers > MAX_PLAYERS
+      ) {
+        throw new Error(
+          `numberOfPlayers must be between ${MIN_PLAYERS} and ${MAX_PLAYERS}`,
+        );
       }
     }
   }
 
   private calculateMinimumPlayers(characters: OptionalCharacter[]): number {
-    const goodOptional = characters.filter(c => c === ROLES.PERCIVAL).length;
-    const evilOptional = characters.filter(c =>
-      c === ROLES.MORGANA || c === ROLES.MORDRED || c === ROLES.OBERON
+    const goodOptional = characters.filter((c) => c === ROLES.PERCIVAL).length;
+    const evilOptional = characters.filter(
+      (c) => c === ROLES.MORGANA || c === ROLES.MORDRED || c === ROLES.OBERON,
     ).length;
 
-    for (let playerCount = MIN_PLAYERS; playerCount <= MAX_PLAYERS; playerCount++) {
+    for (
+      let playerCount = MIN_PLAYERS;
+      playerCount <= MAX_PLAYERS;
+      playerCount++
+    ) {
       const alignment = PLAYER_ALIGNMENT_COUNT[playerCount];
-      if (alignment.good >= (1 + goodOptional) && alignment.evil >= (1 + evilOptional)) {
+      if (
+        alignment.good >= 1 + goodOptional &&
+        alignment.evil >= 1 + evilOptional
+      ) {
         return playerCount;
       }
     }
@@ -261,11 +287,15 @@ class RoomService {
 
   private validateOptionalCharacters(
     characters: OptionalCharacter[],
-    numberOfPlayers?: number
-  ): { validCharacters: OptionalCharacter[]; minPlayers: number; message?: string } {
+    numberOfPlayers?: number,
+  ): {
+    validCharacters: OptionalCharacter[];
+    minPlayers: number;
+    message?: string;
+  } {
     const validCharacters = characters.filter((c) =>
-      OPTIONAL_CHARACTERS.includes(c)
-    ) as OptionalCharacter[];
+      OPTIONAL_CHARACTERS.includes(c),
+    );
 
     if (validCharacters.length === 0) {
       return { validCharacters, minPlayers: MIN_PLAYERS };
@@ -275,31 +305,42 @@ class RoomService {
 
     if (numberOfPlayers !== undefined) {
       if (numberOfPlayers < minPlayersNeeded) {
-        throw new Error(`At least ${minPlayersNeeded} players are required to play with the selected optional characters`);
+        throw new Error(
+          `At least ${minPlayersNeeded} players are required to play with the selected optional characters`,
+        );
       }
 
       const alignment = PLAYER_ALIGNMENT_COUNT[numberOfPlayers];
-      const goodOptional = validCharacters.filter(c => c === ROLES.PERCIVAL).length;
-      const evilOptional = validCharacters.filter(c =>
-        c === ROLES.MORGANA || c === ROLES.MORDRED || c === ROLES.OBERON
+      const goodOptional = validCharacters.filter(
+        (c) => c === ROLES.PERCIVAL,
+      ).length;
+      const evilOptional = validCharacters.filter(
+        (c) => c === ROLES.MORGANA || c === ROLES.MORDRED || c === ROLES.OBERON,
       ).length;
 
-      if (alignment.good < (1 + goodOptional) || alignment.evil < (1 + evilOptional)) {
-        throw new Error(`Cannot fit selected optional characters with ${numberOfPlayers} players`);
+      if (
+        alignment.good < 1 + goodOptional ||
+        alignment.evil < 1 + evilOptional
+      ) {
+        throw new Error(
+          `Cannot fit selected optional characters with ${numberOfPlayers} players`,
+        );
       }
 
       if (numberOfPlayers === 5 && validCharacters.includes(ROLES.PERCIVAL)) {
         const hasBalancingCharacter =
-          validCharacters.includes(ROLES.MORDRED) || validCharacters.includes(ROLES.MORGANA);
+          validCharacters.includes(ROLES.MORDRED) ||
+          validCharacters.includes(ROLES.MORGANA);
         if (!hasBalancingCharacter) {
           throw new Error(ERROR_MESSAGES.PERCIVAL_REQUIRES_BALANCE);
         }
       }
     }
 
-    const message = numberOfPlayers === undefined
-      ? `A room with at least ${minPlayersNeeded} players is needed to play with the selected characters`
-      : undefined;
+    const message =
+      numberOfPlayers === undefined
+        ? `A room with at least ${minPlayersNeeded} players is needed to play with the selected characters`
+        : undefined;
 
     return { validCharacters, minPlayers: minPlayersNeeded, message };
   }
